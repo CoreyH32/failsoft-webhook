@@ -1,4 +1,6 @@
 out/
+bin/
+.gradle/
 *.class
 *.jar
 !gradle/wrapper/*.jar

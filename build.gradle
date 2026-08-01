@@ -1,0 +1,65 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+group = 'dev.coreyh'
+version = '1.0.0'
+
+java {
+    // 11 is the floor: java.net.http arrived in 11, and there is no reason to
+    // require anything newer.
+    sourceCompatibility = JavaVersion.VERSION_11
+    targetCompatibility = JavaVersion.VERSION_11
+    withSourcesJar()
+    withJavadocJar()
+}
+
+repositories {
+    mavenCentral()
+}
+
+// No test framework on purpose, so the library stays dependency-free even at
+// test time. The checks are a main() with assertions.
+sourceSets {
+    selftest {
+        java.srcDir 'src/test/java'
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+    }
+}
+
+tasks.register('selfTest', JavaExec) {
+    description = 'Runs the bundled checks, including a real HTTP server on loopback.'
+    group = 'verification'
+    classpath = sourceSets.selftest.runtimeClasspath
+    mainClass = 'dev.coreyh.webhook.WebhookSelfTest'
+}
+
+tasks.named('check') {
+    dependsOn 'selfTest'
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.encoding = 'UTF-8'
+    options.compilerArgs << '-Xlint:all'
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            from components.java
+            pom {
+                name = 'failsoft-webhook'
+                description = 'Webhook alerting that cannot block, throw, or hold the process open.'
+                url = 'https://github.com/CoreyH32/failsoft-webhook'
+                licenses {
+                    license {
+                        name = 'MIT License'
+                        url = 'https://opensource.org/licenses/MIT'
+                    }
+                }
+            }
+        }
+    }
+}
